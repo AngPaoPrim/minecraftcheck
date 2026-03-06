@@ -1,25 +1,69 @@
-const express = require("express");
-const app = express();
+const express = require("express")
+const bodyParser = require("body-parser")
 
-app.use(express.json());
-app.use(express.static("public")); // เพิ่มบรรทัดนี้
+const app = express()
 
-let serverStatus = {
-    players: 0,
-    maxPlayers: 0,
-    online: false
-};
+app.use(bodyParser.json())
 
-app.post("/status", (req, res) => {
-    serverStatus = req.body;
-    console.log("Status Update:", serverStatus);
-    res.send({ ok: true });
-});
+let status = {
+online:false,
+players:0,
+maxPlayers:20,
+playerList:[]
+}
 
-app.get("/status", (req, res) => {
-    res.json(serverStatus);
-});
+let command = "none"
 
-app.listen(3000, () => {
-    console.log("API running on port 3000");
-});
+app.post("/status",(req,res)=>{
+
+status = req.body
+
+console.log("Status Update:",status)
+
+res.sendStatus(200)
+
+})
+
+app.get("/status",(req,res)=>{
+
+res.json(status)
+
+})
+
+app.get("/players",(req,res)=>{
+
+res.json(status.playerList || [])
+
+})
+
+app.post("/cmd",(req,res)=>{
+
+command = req.body.cmd
+
+console.log("Command from web:",command)
+
+res.sendStatus(200)
+
+})
+
+app.get("/cmd",(req,res)=>{
+
+res.send(command)
+
+command = "none"
+
+})
+
+app.get("/",(req,res)=>{
+
+res.sendFile(__dirname + "/index.html")
+
+})
+
+const PORT = process.env.PORT || 3000
+
+app.listen(PORT,()=>{
+
+console.log("Server running on port",PORT)
+
+})
