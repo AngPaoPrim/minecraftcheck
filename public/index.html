@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minecraft Server</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --grass: #5d9b3f;
+    --dirt: #8b5e3c;
+    --stone: #7a7a7a;
+    --obsidian: #0d0d12;
+    --coal: #1a1a24;
+    --iron: #c8c8c8;
+    --emerald: #17dd62;
+    --redstone: #e03030;
+    --sky: #87ceeb;
+    --wood: #a0692a;
+    --gold: #ffd700;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--obsidian);
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 31px,
+        rgba(255,255,255,0.015) 31px,
+        rgba(255,255,255,0.015) 32px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 31px,
+        rgba(255,255,255,0.015) 31px,
+        rgba(255,255,255,0.015) 32px
+      );
+    font-family: 'VT323', monospace;
+    color: var(--iron);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  /* Stars background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 15%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 80%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 40%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(2px 2px at 20% 85%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 70%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 45%, rgba(255,255,255,0.2) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  /* Pixel border mixin */
+  .pixel-box {
+    image-rendering: pixelated;
+    border: 4px solid;
+    border-color: #fff rgba(0,0,0,0.6) rgba(0,0,0,0.6) #fff;
+    box-shadow:
+      inset 2px 2px 0 rgba(255,255,255,0.15),
+      inset -2px -2px 0 rgba(0,0,0,0.4),
+      0 8px 32px rgba(0,0,0,0.8);
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .server-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 16px;
+    background: linear-gradient(135deg, #5d9b3f 0%, #3d7a27 50%, #2d5a1a 100%);
+    border: 4px solid rgba(255,255,255,0.3);
+    border-right-color: rgba(0,0,0,0.5);
+    border-bottom-color: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    box-shadow: 0 4px 20px rgba(93,155,63,0.4);
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  .title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    color: var(--gold);
+    text-shadow:
+      2px 2px 0 rgba(0,0,0,0.8),
+      0 0 20px rgba(255,215,0,0.4);
+    letter-spacing: 1px;
+    line-height: 1.6;
+  }
+
+  .subtitle {
+    font-size: 18px;
+    color: rgba(200,200,200,0.6);
+    margin-top: 4px;
+  }
+
+  /* Main card */
+  .card {
+    background: var(--coal);
+    padding: 24px;
+    margin-top: 20px;
+    border-radius: 2px;
+    border: 3px solid #2a2a38;
+    border-top-color: #3a3a50;
+    border-left-color: #3a3a50;
+    box-shadow:
+      inset 1px 1px 0 rgba(255,255,255,0.05),
+      0 16px 48px rgba(0,0,0,0.8);
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: rgba(0,0,0,0.4);
+    border: 2px solid #1e1e2e;
+    border-top-color: #3e3e5e;
+    border-left-color: #3e3e5e;
+    margin-bottom: 20px;
+    border-radius: 2px;
+  }
+
+  .status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 0;
+    background: var(--stone);
+    flex-shrink: 0;
+    transition: background 0.5s;
+  }
+
+  .status-dot.online {
+    background: var(--emerald);
+    box-shadow: 0 0 8px var(--emerald), 0 0 16px rgba(23,221,98,0.3);
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  .status-dot.offline {
+    background: var(--redstone);
+    box-shadow: 0 0 8px var(--redstone);
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .status-text {
+    font-size: 22px;
+    flex: 1;
+  }
+
+  .player-count {
+    font-size: 18px;
+    color: var(--gold);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+  }
+
+  /* Server address */
+  .address-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #2a2a3a;
+    margin-bottom: 20px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .address-box:hover {
+    background: rgba(23,221,98,0.05);
+    border-color: rgba(23,221,98,0.3);
+  }
+
+  .address-label {
+    font-size: 14px;
+    color: rgba(200,200,200,0.4);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 12px;
+  }
+
+  .address-value {
+    font-size: 20px;
+    color: var(--emerald);
+    flex: 1;
+  }
+
+  .copy-hint {
+    font-size: 13px;
+    color: rgba(200,200,200,0.3);
+    transition: color 0.2s;
+  }
+
+  .address-box:hover .copy-hint {
+    color: var(--emerald);
+  }
+
+  .copy-flash {
+    position: absolute;
+    inset: 0;
+    background: rgba(23,221,98,0.1);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s;
+  }
+
+  .copy-flash.active { opacity: 1; }
+
+  /* Section heading */
+  .section-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    color: rgba(200,200,200,0.4);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #2a2a3a;
+  }
+
+  /* Players list */
+  .players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 6px;
+    min-height: 40px;
+  }
+
+  .player {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #1e1e2e;
+    border-top-color: #2e2e42;
+    border-left-color: #2e2e42;
+    border-radius: 2px;
+    font-size: 18px;
+    animation: fadeIn 0.3s ease forwards;
+    transition: background 0.2s;
+  }
+
+  .player:hover {
+    background: rgba(23,221,98,0.08);
+    border-color: rgba(23,221,98,0.2);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .player-avatar {
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #8b5e3c, #5a3c1e);
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .player-avatar img {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+  }
+
+  .player-name {
+    font-size: 18px;
+    color: var(--iron);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .empty-state {
+    grid-column: 1/-1;
+    text-align: center;
+    padding: 20px;
+    font-size: 18px;
+    color: rgba(200,200,200,0.3);
+  }
+
+  /* Loading shimmer */
+  .loading-bar {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--emerald), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    margin-top: 20px;
+    opacity: 0.5;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* Footer */
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #1e1e2e;
+    font-size: 14px;
+    color: rgba(200,200,200,0.3);
+  }
+
+  .refresh-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+  }
+
+  .refresh-dot {
+    width: 6px;
+    height: 6px;
+    background: rgba(23,221,98,0.4);
+    border-radius: 0;
+    animation: pulse 5s linear infinite;
+  }
+
+  @keyframes pulse {
+    0%, 80%, 100% { transform: scale(1); opacity: 0.4; }
+    90% { transform: scale(1.5); opacity: 1; background: var(--emerald); }
+  }
+
+  .admin-link {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: rgba(200,200,200,0.3);
+    text-decoration: none;
+    padding: 6px 10px;
+    border: 1px solid rgba(200,200,200,0.1);
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    border-radius: 2px;
+  }
+
+  .admin-link:hover {
+    color: var(--gold);
+    border-color: rgba(255,215,0,0.3);
+    background: rgba(255,215,0,0.05);
+  }
+
+  /* MOTD */
+  .motd {
+    text-align: center;
+    font-size: 20px;
+    color: rgba(200,200,200,0.5);
+    margin-bottom: 16px;
+    min-height: 24px;
+    font-style: italic;
+  }
+
+  /* Tooltip for copy */
+  .copy-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--emerald);
+    color: #000;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    padding: 10px 16px;
+    border-radius: 2px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 100;
+    letter-spacing: 1px;
+  }
+
+  .copy-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="server-icon">⛏</div>
+    <div class="title">MINECRAFT<br>SERVER</div>
+  </div>
+
+  <div class="card">
+    <div class="motd" id="motd">Connecting to server...</div>
+
+    <div class="status-bar">
+      <div class="status-dot" id="status-dot"></div>
+      <div class="status-text" id="status-text">Fetching status...</div>
+      <div class="player-count" id="player-count"></div>
+    </div>
+
+    <div class="address-box" onclick="copyAddress()">
+      <div>
+        <div class="address-label">Server Address</div>
+        <div class="address-value" id="server-addr">vowel-invitation.gl.joinmc.link</div>
+      </div>
+      <div class="copy-hint">[ COPY ]</div>
+      <div class="copy-flash" id="copy-flash"></div>
+    </div>
+
+    <div class="section-title">Online Players</div>
+    <div class="players-grid" id="players">
+      <div class="empty-state">Loading...</div>
+    </div>
+
+    <div class="loading-bar" id="loading-bar"></div>
+
+    <div class="footer">
+      <div class="refresh-indicator">
+        <div class="refresh-dot"></div>
+        <span>Auto-refresh every 5s</span>
+      </div>
+      <a href="admin.html" class="admin-link">⚙ ADMIN</a>
+    </div>
+  </div>
+</div>
+
+<div class="copy-toast" id="copy-toast">COPIED!</div>
+
+<script>
+const server = "vowel-invitation.gl.joinmc.link";
+
+async function load() {
+  const loadingBar = document.getElementById("loading-bar");
+  loadingBar.style.display = "block";
+  try {
+    const res = await fetch("https://api.mcsrvstat.us/2/" + server);
+    const data = await res.json();
+
+    const dot = document.getElementById("status-dot");
+    const statusText = document.getElementById("status-text");
+    const playerCount = document.getElementById("player-count");
+    const playersGrid = document.getElementById("players");
+    const motd = document.getElementById("motd");
+
+    if (data.online) {
+      dot.className = "status-dot online";
+      statusText.textContent = "Server Online";
+      playerCount.textContent = data.players.online + " / " + data.players.max;
+      motd.textContent = data.motd?.clean?.[0] || "Welcome to the server!";
+
+      playersGrid.innerHTML = "";
+      if (data.players.list && data.players.list.length > 0) {
+        data.players.list.forEach((p, i) => {
+          const div = document.createElement("div");
+          div.className = "player";
+          div.style.animationDelay = (i * 50) + "ms";
+          div.innerHTML = `
+            <div class="player-avatar">
+              <img src="https://mc-heads.net/avatar/${p}/24" alt="${p}" onerror="this.parentElement.textContent='👤'">
+            </div>
+            <span class="player-name">${p}</span>
+          `;
+          playersGrid.appendChild(div);
+        });
+      } else if (data.players.online === 0) {
+        playersGrid.innerHTML = `<div class="empty-state">No players online</div>`;
+      } else {
+        playersGrid.innerHTML = `<div class="empty-state">${data.players.online} player(s) online</div>`;
+      }
+    } else {
+      dot.className = "status-dot offline";
+      statusText.textContent = "Server Offline";
+      playerCount.textContent = "";
+      motd.textContent = "Server is currently offline";
+      playersGrid.innerHTML = `<div class="empty-state">—</div>`;
+    }
+  } catch (e) {
+    document.getElementById("status-text").textContent = "Failed to fetch";
+    document.getElementById("status-dot").className = "status-dot offline";
+  } finally {
+    loadingBar.style.display = "none";
+  }
+}
+
+function copyAddress() {
+  navigator.clipboard.writeText(server).then(() => {
+    const flash = document.getElementById("copy-flash");
+    const toast = document.getElementById("copy-toast");
+    flash.classList.add("active");
+    toast.classList.add("show");
+    setTimeout(() => {
+      flash.classList.remove("active");
+      toast.classList.remove("show");
+    }, 1500);
+  });
+}
+
+load();
+setInterval(load, 5000);
+</script>
+</body>
+</html>
