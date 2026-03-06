@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MC Server Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060810;--card:#0e1525;--border:#1a2744;
+  --accent:#00d4ff;--accent2:#0066ff;--green:#00ff88;--red:#ff3355;--amber:#ffaa00;
+  --text:#c8d8f0;--muted:#3a5070;
+  --display:'Orbitron',monospace;--mono:'JetBrains Mono',monospace;
+}
+html,body{height:100%;overflow-x:hidden}
+body{
+  background:var(--bg);color:var(--text);font-family:var(--mono);
+  min-height:100vh;display:flex;align-items:flex-start;justify-content:center;
+  padding:28px 16px 60px;position:relative;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,212,255,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,212,255,.04) 1px,transparent 1px);
+  background-size:48px 48px;animation:gridmove 20s linear infinite;z-index:0;
+}
+@keyframes gridmove{from{background-position:0 0}to{background-position:48px 48px}}
+body::after{
+  content:'';position:fixed;top:50%;left:50%;width:900px;height:900px;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(ellipse,rgba(0,102,255,.07) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+.container{position:relative;z-index:1;width:100%;max-width:560px;
+  animation:rise .5s cubic-bezier(.4,0,.2,1) both;}
+@keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Header ── */
+.title{
+  font-family:var(--display);font-size:clamp(14px,4vw,23px);font-weight:900;
+  letter-spacing:4px;text-align:center;margin-bottom:4px;text-transform:uppercase;
+  background:linear-gradient(135deg,var(--accent),var(--accent2),var(--green));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 18px rgba(0,212,255,.3));
+}
+.subtitle{text-align:center;font-size:9px;color:var(--muted);letter-spacing:4px;
+  text-transform:uppercase;margin-bottom:6px;}
+.live-pill{display:flex;align-items:center;justify-content:center;gap:6px;
+  margin-bottom:22px;font-size:9px;letter-spacing:3px;color:var(--green);
+  text-transform:uppercase;font-family:var(--display);}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);
+  animation:liveblink 1.2s ease-in-out infinite;box-shadow:0 0 6px var(--green);}
+@keyframes liveblink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:0;}
+.tab{
+  font-family:var(--display);font-size:8px;padding:11px 22px;cursor:pointer;
+  color:var(--muted);border:1px solid transparent;border-bottom:none;
+  margin-bottom:-1px;transition:all .2s;letter-spacing:1px;background:none;
+  text-transform:uppercase;border-radius:6px 6px 0 0;
+}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-color:var(--border);
+  border-bottom:1px solid var(--card);background:var(--card);
+  text-shadow:0 0 10px rgba(0,212,255,.4)}
+.tab.admin-tab.active{color:var(--amber);text-shadow:0 0 10px rgba(255,170,0,.4)}
+
+.page{display:none}.page.active{display:block}
+
+/* ── Card ── */
+.card{
+  background:var(--card);border:1px solid var(--border);border-radius:0 8px 8px 8px;
+  padding:22px 24px;margin-bottom:12px;position:relative;overflow:hidden;
+  box-shadow:0 0 0 1px rgba(0,212,255,.03),0 14px 40px rgba(0,0,0,.5),
+    inset 0 1px 0 rgba(255,255,255,.04);
+}
+.card:not(:first-child){border-radius:8px}
+.card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.35;
+}
+.card-label{font-size:8px;letter-spacing:3px;color:var(--muted);
+  text-transform:uppercase;margin-bottom:14px;font-family:var(--display);}
+
+/* ── Status badge ── */
+.status-badge{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 14px;background:rgba(0,0,0,.3);
+  border:1px solid var(--border);border-radius:8px;margin-bottom:18px;
+  transition:border-color .4s;
+}
+.status-badge.b-online{border-color:rgba(0,255,136,.25)}
+.status-badge.b-offline{border-color:rgba(255,51,85,.2)}
+.badge-left{display:flex;align-items:center;gap:11px}
+.indicator{width:11px;height:11px;border-radius:50%;flex-shrink:0;transition:all .5s}
+.indicator.online{background:var(--green);
+  box-shadow:0 0 0 3px rgba(0,255,136,.2),0 0 14px rgba(0,255,136,.6);
+  animation:heartbeat 2s ease-in-out infinite}
+.indicator.offline{background:var(--red);
+  box-shadow:0 0 0 3px rgba(255,51,85,.2),0 0 12px rgba(255,51,85,.4)}
+.indicator.loading{background:var(--amber);animation:blink .9s ease-in-out infinite}
+@keyframes heartbeat{
+  0%,100%{transform:scale(1)}14%{transform:scale(1.35)}28%{transform:scale(1)}
+  42%{transform:scale(1.15)}70%{transform:scale(1)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.status-label{font-family:var(--display);font-size:11px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;transition:color .4s}
+.status-label.online{color:var(--green);text-shadow:0 0 10px rgba(0,255,136,.5)}
+.status-label.offline{color:var(--red)}
+.status-label.loading{color:var(--amber)}
+.last-ping{font-size:9px;color:var(--muted)}
+
+/* ── Stats ── */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:12px}
+.stat-box{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:13px}
+.stat-key{font-size:8px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.stat-val{font-family:var(--display);font-size:26px;font-weight:700;
+  color:var(--accent);text-shadow:0 0 14px rgba(0,212,255,.4);display:inline-block;border-radius:4px;}
+.stat-val.green{color:var(--green);text-shadow:0 0 12px rgba(0,255,136,.4)}
+@keyframes flash{0%{background:rgba(0,212,255,.18)}100%{background:transparent}}
+.flash{animation:flash .5s ease-out}
+
+/* ── Bar ── */
+.cap-wrap{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:13px}
+.cap-header{display:flex;justify-content:space-between;margin-bottom:9px}
+.cap-label{font-size:8px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
+.cap-count{font-family:var(--display);font-size:11px;color:var(--text)}
+.bar-track{height:7px;background:rgba(0,0,0,.5);border-radius:4px;overflow:hidden;
+  border:1px solid rgba(0,212,255,.1)}
+.bar-fill{height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--accent2),var(--accent),var(--green));
+  transition:width .8s cubic-bezier(.4,0,.2,1);box-shadow:0 0 8px rgba(0,212,255,.4);
+  position:relative;overflow:hidden}
+.bar-fill::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);
+  animation:shimmer 2s linear infinite}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+
+/* ── Players ── */
+.player-grid{display:flex;flex-wrap:wrap;gap:7px;min-height:32px}
+.player-tag{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.2);
+  border-radius:6px;padding:5px 11px;
+  font-size:11px;color:var(--green);letter-spacing:1px;
+  animation:tagin .3s ease both;
+}
+@keyframes tagin{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.player-tag::before{content:'▶';font-size:7px;color:rgba(0,255,136,.5)}
+.empty-players{color:var(--muted);font-size:10px;letter-spacing:2px;padding:5px 0}
+
+/* ── Poll row ── */
+.poll-row{display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:8px;margin-top:4px}
+.poll-info{display:flex;align-items:center;gap:8px}
+.poll-ring{width:24px;height:24px;flex-shrink:0}
+.poll-ring svg{transform:rotate(-90deg)}
+.poll-ring circle.track{stroke:rgba(0,212,255,.1);fill:none;stroke-width:3}
+.poll-ring circle.fill{stroke:var(--accent);fill:none;stroke-width:3;
+  stroke-linecap:round;stroke-dasharray:66;stroke-dashoffset:66;}
+.poll-text{font-size:9px;color:var(--muted);letter-spacing:2px}
+.poll-count{font-size:9px;color:rgba(0,212,255,.4);font-family:var(--display)}
+
+/* ── Admin login ── */
+.login-wrap{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 20px;gap:18px;
+}
+.lock-icon{font-size:36px;margin-bottom:4px;filter:drop-shadow(0 0 12px rgba(255,170,0,.4))}
+.login-title{font-family:var(--display);font-size:12px;letter-spacing:3px;
+  color:var(--amber);text-transform:uppercase}
+.login-sub{font-size:10px;color:var(--muted);letter-spacing:2px}
+.pin-row{display:flex;gap:10px}
+.pin-dot{
+  width:14px;height:14px;border-radius:50%;
+  border:2px solid var(--border);background:transparent;
+  transition:all .3s;
+}
+.pin-dot.filled{background:var(--amber);border-color:var(--amber);
+  box-shadow:0 0 10px rgba(255,170,0,.5)}
+.pin-input{
+  background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:8px;
+  padding:11px 16px;color:var(--amber);font-family:var(--mono);font-size:18px;
+  letter-spacing:8px;outline:none;text-align:center;width:160px;
+  transition:border-color .2s;
+}
+.pin-input:focus{border-color:rgba(255,170,0,.5);box-shadow:0 0 10px rgba(255,170,0,.1)}
+.pin-input::placeholder{color:var(--muted);letter-spacing:3px;font-size:12px}
+.login-btn{
+  font-family:var(--display);font-size:9px;letter-spacing:2px;
+  padding:10px 28px;background:none;cursor:pointer;
+  border:1px solid rgba(255,170,0,.35);border-radius:8px;
+  color:var(--amber);text-transform:uppercase;transition:all .2s;
+}
+.login-btn:hover{border-color:var(--amber);background:rgba(255,170,0,.08);
+  box-shadow:0 0 14px rgba(255,170,0,.15)}
+.login-err{font-size:10px;color:var(--red);letter-spacing:2px;
+  min-height:16px;animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* ── Console (admin unlocked) ── */
+.admin-content{display:none}
+.admin-content.unlocked{display:block}
+
+.terminal{
+  background:#050810;border:1px solid var(--border);border-radius:8px;
+  padding:14px;height:240px;overflow-y:auto;margin-bottom:11px;
+  font-size:12px;scroll-behavior:smooth;
+}
+.terminal::-webkit-scrollbar{width:4px}
+.terminal::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.t-line{line-height:1.8;padding:1px 0;word-break:break-word}
+.t-line.cmd{color:var(--amber)}
+.t-line.cmd::before{content:'» ';color:rgba(255,170,0,.5);font-size:9px}
+.t-line.sent{color:var(--green);padding-left:14px}
+.t-line.sent::before{content:'✓ ';font-size:9px}
+.t-line.err{color:var(--red);padding-left:14px}
+.t-line.info{color:var(--muted);font-style:italic}
+.t-line.sys{color:var(--accent)}
+.t-line.sys::before{content:'# ';color:rgba(0,212,255,.5);font-size:9px}
+
+.cmd-row{display:flex;gap:10px;margin-bottom:10px}
+.cmd-input{
+  flex:1;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:8px;
+  padding:10px 14px;color:var(--amber);font-family:var(--mono);font-size:13px;
+  outline:none;transition:border-color .2s;
+}
+.cmd-input:focus{border-color:rgba(255,170,0,.4);box-shadow:0 0 10px rgba(255,170,0,.08)}
+.cmd-input::placeholder{color:var(--muted)}
+.send-btn{
+  font-family:var(--display);font-size:8px;letter-spacing:1px;padding:10px 18px;
+  background:none;cursor:pointer;border:1px solid rgba(255,170,0,.35);
+  border-radius:8px;color:var(--amber);text-transform:uppercase;
+  transition:all .2s;white-space:nowrap;
+}
+.send-btn:hover{border-color:var(--amber);background:rgba(255,170,0,.08)}
+.send-btn:active{transform:scale(.97)}
+
+.quick-wrap{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.qbtn{font-size:9px;padding:5px 11px;background:rgba(0,0,0,.3);
+  border:1px solid var(--border);border-radius:6px;color:var(--muted);
+  cursor:pointer;transition:all .2s;letter-spacing:1px;}
+.qbtn:hover{color:var(--amber);border-color:rgba(255,170,0,.3)}
+
+.logout-btn{font-family:var(--display);font-size:8px;letter-spacing:1px;
+  padding:7px 14px;background:none;cursor:pointer;
+  border:1px solid rgba(255,51,85,.25);border-radius:6px;color:var(--red);
+  transition:all .2s;float:right;margin-bottom:12px;}
+.logout-btn:hover{border-color:var(--red);background:rgba(255,51,85,.08)}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:#0e0810;border:1px solid rgba(255,51,85,.4);border-radius:8px;
+  padding:9px 20px;font-size:11px;color:var(--red);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:999;white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{background:#080e10;border-color:rgba(0,255,136,.4);color:var(--green)}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1 class="title">⛏ MC Server Panel</h1>
+  <p class="subtitle">Minecraft Server Dashboard</p>
+  <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('status',this)">▶ STATUS</button>
+    <button class="tab admin-tab" onclick="switchTab('admin',this)">⚙ ADMIN</button>
+  </div>
+
+  <!-- ════ STATUS PAGE ════ -->
+  <div id="page-status" class="page active">
+    <div class="card">
+      <div class="status-badge" id="badge">
+        <div class="badge-left">
+          <div class="indicator loading" id="dot"></div>
+          <span class="status-label loading" id="statusLabel">CONNECTING...</span>
+        </div>
+        <span class="last-ping" id="lastPing">—</span>
+      </div>
+      <div class="stats">
+        <div class="stat-box">
+          <div class="stat-key">Players Online</div>
+          <div class="stat-val green" id="players">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-key">Max Players</div>
+          <div class="stat-val" id="maxPlayers">—</div>
+        </div>
+      </div>
+      <div class="cap-wrap">
+        <div class="cap-header">
+          <span class="cap-label">Capacity</span>
+          <span class="cap-count" id="capCount">— / —</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Players Online</div>
+      <div class="player-grid" id="playerGrid">
+        <div class="empty-players">Loading...</div>
+      </div>
+    </div>
+
+    <div class="poll-row">
+      <div class="poll-info">
+        <div class="poll-ring">
+          <svg width="24" height="24" viewBox="0 0 24 24">
+            <circle class="track" cx="12" cy="12" r="9"/>
+            <circle class="fill" id="ringFill" cx="12" cy="12" r="9"/>
+          </svg>
+        </div>
+        <span class="poll-text" id="pollText">Updating...</span>
+      </div>
+      <span class="poll-count" id="pollCount">POLL #0</span>
+    </div>
+  </div>
+
+  <!-- ════ ADMIN PAGE ════ -->
+  <div id="page-admin" class="page">
+
+    <!-- Login screen -->
+    <div class="card" id="loginCard">
+      <div class="login-wrap">
+        <div class="lock-icon">🔒</div>
+        <div class="login-title">Admin Access</div>
+        <div class="login-sub">Enter password to continue</div>
+        <div class="pin-row" id="pinDots">
+          <div class="pin-dot" id="pd0"></div>
+          <div class="pin-dot" id="pd1"></div>
+          <div class="pin-dot" id="pd2"></div>
+          <div class="pin-dot" id="pd3"></div>
+        </div>
+        <input class="pin-input" id="pinInput" type="password" maxlength="4"
+               placeholder="Password" oninput="onPin()" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <button class="login-btn" onclick="doLogin()">UNLOCK</button>
+        <div class="login-err" id="loginErr"></div>
+      </div>
+    </div>
+
+    <!-- Admin console (hidden until login) -->
+    <div class="admin-content" id="adminContent">
+      <div class="card">
+        <button class="logout-btn" onclick="doLogout()">🔒 Lock</button>
+        <div class="card-label" style="clear:both">RCON Console</div>
+
+        <div class="terminal" id="terminal">
+          <div class="t-line info">── Admin Console Ready ──</div>
+          <div class="t-line info">Commands are sent via POST /cmd to the server.</div>
+          <div class="t-line info">The Minecraft plugin polls GET /cmd to execute.</div>
+        </div>
+
+        <div class="cmd-row">
+          <input class="cmd-input" id="cmdInput" placeholder="e.g.  list   say Hello   time set day"
+                 onkeydown="if(event.key==='Enter')sendCmd()"/>
+          <button class="send-btn" onclick="sendCmd()">SEND</button>
+        </div>
+
+        <div class="quick-wrap">
+          <button class="qbtn" onclick="quick('list')">list</button>
+          <button class="qbtn" onclick="quick('time set day')">day</button>
+          <button class="qbtn" onclick="quick('time set night')">night</button>
+          <button class="qbtn" onclick="quick('weather clear')">clear weather</button>
+          <button class="qbtn" onclick="quick('weather rain')">rain</button>
+          <button class="qbtn" onclick="quick('gamerule keepInventory true')">keepInv on</button>
+          <button class="qbtn" onclick="quick('gamerule keepInventory false')">keepInv off</button>
+          <button class="qbtn" onclick="quick('gamerule doDaylightCycle false')">stop daylight</button>
+          <button class="qbtn" onclick="quick('difficulty peaceful')">peaceful</button>
+          <button class="qbtn" onclick="quick('difficulty normal')">normal</button>
+          <button class="qbtn" onclick="quick('difficulty hard')">hard</button>
+          <button class="qbtn" onclick="quick('seed')">seed</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /admin -->
+
+</div><!-- /container -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════ CONFIG ════ */
+const POLL_MS  = 2000;
+const PASSWORD = '2522';
+const CIRC     = Math.PI * 2 * 9; // r=9 → ~56.5
+
+/* ════ STATE ════ */
+let prev = {}, pollCount = 0, pollRaf = null;
+let cmdHistory = [], histIdx = -1;
+let authed = false;
+
+/* ════ DOM ════ */
+const dot         = document.getElementById('dot');
+const statusLabel = document.getElementById('statusLabel');
+const badge       = document.getElementById('badge');
+const lastPing    = document.getElementById('lastPing');
+const elPlayers   = document.getElementById('players');
+const elMax       = document.getElementById('maxPlayers');
+const barFill     = document.getElementById('barFill');
+const capCount    = document.getElementById('capCount');
+const playerGrid  = document.getElementById('playerGrid');
+const ringFill    = document.getElementById('ringFill');
+const pollText    = document.getElementById('pollText');
+const pollCountEl = document.getElementById('pollCount');
+const toastEl     = document.getElementById('toast');
+ringFill.style.strokeDasharray  = CIRC;
+ringFill.style.strokeDashoffset = CIRC;
+
+/* ════ TABS ════ */
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('page-' + name).classList.add('active');
+}
+
+/* ════ STATUS POLLING ════ */
+async function fetchStatus() {
+  try {
+    const r = await fetch('/status');
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    applyStatus(d);
+    hideToast();
+  } catch {
+    setDot('offline', 'UNREACHABLE');
+    badge.className = 'status-badge b-offline';
+    showToast('⚠ Server unreachable', false);
+  }
+  pollCount++;
+  pollCountEl.textContent = 'POLL #' + pollCount;
+  lastPing.textContent = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  startCountdown();
+}
+
+function applyStatus(d) {
+  const online = !!d.online;
+  if (prev.online !== online) {
+    setDot(online ? 'online' : 'offline', online ? 'ONLINE' : 'OFFLINE');
+    badge.className = 'status-badge ' + (online ? 'b-online' : 'b-offline');
+  }
+  if (prev.players !== d.players)   setFlash(elPlayers,   d.players   ?? '—');
+  if (prev.maxPlayers !== d.maxPlayers) setFlash(elMax,   d.maxPlayers ?? '—');
+  if (prev.players !== d.players || prev.maxPlayers !== d.maxPlayers) {
+    const pct = d.maxPlayers > 0 ? Math.min(100, Math.round(d.players / d.maxPlayers * 100)) : 0;
+    barFill.style.width = pct + '%';
+    capCount.textContent = (d.players ?? '—') + ' / ' + (d.maxPlayers ?? '—');
+  }
+  // Player list
+  const list = d.playerList || [];
+  const key  = list.join(',');
+  if (prev.playerKey !== key) {
+    playerGrid.innerHTML = list.length
+      ? list.map(p => `<div class="player-tag">${esc(p)}</div>`).join('')
+      : '<div class="empty-players">No players online</div>';
+    prev.playerKey = key;
+  }
+  prev = { ...prev, online, players: d.players, maxPlayers: d.maxPlayers };
+}
+
+function setDot(cls, msg) {
+  dot.className = 'indicator ' + cls;
+  statusLabel.className = 'status-label ' + cls;
+  statusLabel.textContent = msg;
+}
+function setFlash(el, val) {
+  el.textContent = val;
+  el.classList.remove('flash');
+  void el.offsetWidth;
+  el.classList.add('flash');
+}
+
+/* ── Countdown ring ── */
+function startCountdown() {
+  if (pollRaf) cancelAnimationFrame(pollRaf);
+  const end = Date.now() + POLL_MS;
+  function tick() {
+    const rem = Math.max(0, end - Date.now());
+    const progress = 1 - rem / POLL_MS;
+    ringFill.style.strokeDashoffset = CIRC * (1 - progress);
+    pollText.textContent = rem > 0 ? `Updating in ${Math.ceil(rem/1000)}s` : 'Updating...';
+    if (rem > 0) pollRaf = requestAnimationFrame(tick);
+    else fetchStatus();
+  }
+  pollRaf = requestAnimationFrame(tick);
+}
+
+/* ════ ADMIN LOGIN ════ */
+function onPin() {
+  const v = document.getElementById('pinInput').value;
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('pd' + i).classList.toggle('filled', i < v.length);
+  }
+}
+function doLogin() {
+  const v = document.getElementById('pinInput').value;
+  if (v === PASSWORD) {
+    authed = true;
+    document.getElementById('loginCard').style.display = 'none';
+    document.getElementById('adminContent').classList.add('unlocked');
+    termLog('sys', 'Session authenticated. Console active.');
+  } else {
+    document.getElementById('loginErr').textContent = '✗ Wrong password';
+    document.getElementById('pinInput').value = '';
+    onPin();
+    setTimeout(() => document.getElementById('loginErr').textContent = '', 2000);
+  }
+}
+function doLogout() {
+  authed = false;
+  document.getElementById('pinInput').value = '';
+  onPin();
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('loginCard').style.display = 'block';
+  document.getElementById('adminContent').classList.remove('unlocked');
+}
+
+/* ════ COMMAND ════ */
+function quick(cmd) {
+  document.getElementById('cmdInput').value = cmd;
+  sendCmd();
+}
+document.getElementById('cmdInput').addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowUp') {
+    if (histIdx < cmdHistory.length - 1) { histIdx++; this.value = cmdHistory[cmdHistory.length-1-histIdx]; }
+    e.preventDefault();
+  }
+  if (e.key === 'ArrowDown') {
+    if (histIdx > 0) { histIdx--; this.value = cmdHistory[cmdHistory.length-1-histIdx]; }
+    else { histIdx = -1; this.value = ''; }
+    e.preventDefault();
+  }
+});
+
+async function sendCmd() {
+  const inp = document.getElementById('cmdInput');
+  const cmd = inp.value.trim();
+  if (!cmd) return;
+  cmdHistory.push(cmd); histIdx = -1;
+  termLog('cmd', cmd);
+  inp.value = '';
+  try {
+    const r = await fetch('/cmd', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cmd })
+    });
+    if (r.ok) {
+      termLog('sent', 'Queued → server will execute on next poll');
+      showToast('✓ Command sent', true);
+    } else {
+      termLog('err', 'Server error ' + r.status);
+    }
+  } catch(e) {
+    termLog('err', 'Network error: ' + e.message);
+  }
+  inp.focus();
+}
+
+function termLog(cls, text) {
+  const t = document.getElementById('terminal');
+  const d = document.createElement('div');
+  d.className = 't-line ' + cls;
+  d.textContent = text;
+  t.appendChild(d);
+  t.scrollTop = t.scrollHeight;
+}
+
+/* ════ TOAST ════ */
+let toastTimer = null;
+function showToast(msg, ok) {
+  toastEl.textContent = msg;
+  toastEl.className = 'toast show' + (ok ? ' ok' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, 2500);
+}
+function hideToast() { toastEl.classList.remove('show'); }
+
+/* ════ UTIL ════ */
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ════ BOOT ════ */
+fetchStatus();
+</script>
+</body>
+</html>
