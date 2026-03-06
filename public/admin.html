@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — Minecraft Server</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060810;
+    --surface: #0d1117;
+    --panel: #111827;
+    --border: #1e2a3a;
+    --border-light: #2a3a50;
+    --emerald: #17dd62;
+    --gold: #ffd700;
+    --red: #e03030;
+    --blue: #3b82f6;
+    --text: #a0b8c8;
+    --text-dim: rgba(160,184,200,0.4);
+    --text-bright: #d0e8f8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(23,221,98,0.02) 19px, rgba(23,221,98,0.02) 20px),
+      repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(23,221,98,0.02) 19px, rgba(23,221,98,0.02) 20px);
+    color: var(--text);
+    font-family: 'VT323', monospace;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.07) 0px, rgba(0,0,0,0.07) 1px, transparent 1px, transparent 2px);
+    pointer-events: none;
+    z-index: 9999;
+  }
+  .wrapper { width: 100%; max-width: 720px; }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 2px 2px 0 0;
+  }
+  .topbar-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    color: var(--emerald);
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(23,221,98,0.5);
+  }
+  .back-link {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+    letter-spacing: 1px;
+  }
+  .back-link:hover { color: var(--text); }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px;
+    border-radius: 0 0 2px 2px;
+  }
+
+  /* LOGIN */
+  #login { text-align: center; padding: 20px 0; }
+  .login-icon { font-size: 48px; margin-bottom: 16px; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  .login-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    text-shadow: 0 0 15px rgba(255,215,0,0.4);
+  }
+  .login-subtitle { font-size: 18px; color: var(--text-dim); margin-bottom: 28px; }
+  .input-group { position: relative; margin-bottom: 12px; }
+  .input-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 6px;
+    text-align: left;
+  }
+  input[type="password"], input[type="text"] {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-top-color: var(--border-light);
+    border-left-color: var(--border-light);
+    color: var(--emerald);
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    letter-spacing: 3px;
+    border-radius: 2px;
+    caret-color: var(--emerald);
+  }
+  input:focus {
+    border-color: rgba(23,221,98,0.4);
+    box-shadow: 0 0 0 1px rgba(23,221,98,0.15), inset 0 0 20px rgba(23,221,98,0.05);
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-radius: 2px;
+  }
+  .btn-primary {
+    background: var(--emerald);
+    color: #000;
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.4), 0 0 20px rgba(23,221,98,0.2);
+  }
+  .btn-primary:hover { background: #22ff77; transform: translateY(-1px); box-shadow: 0 6px 0 rgba(0,0,0,0.4), 0 0 30px rgba(23,221,98,0.4); }
+  .btn-primary:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.4); }
+  .btn-secondary {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border-light);
+    font-size: 8px;
+    padding: 8px 14px;
+  }
+  .btn-secondary:hover { background: var(--border-light); color: var(--text-bright); }
+  .btn-danger {
+    background: rgba(224,48,48,0.15);
+    color: var(--red);
+    border: 1px solid rgba(224,48,48,0.3);
+    font-size: 8px;
+    padding: 8px 14px;
+  }
+  .btn-danger:hover { background: rgba(224,48,48,0.25); border-color: rgba(224,48,48,0.5); }
+  .error-msg { font-size: 18px; color: var(--red); margin-top: 10px; min-height: 24px; text-align: center; letter-spacing: 1px; }
+
+  /* PANEL */
+  #panel { display: none; }
+  .panel-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  #console {
+    background: #03060a;
+    border: 1px solid var(--border);
+    border-top-color: var(--border-light);
+    border-left-color: var(--border-light);
+    height: 280px;
+    overflow-y: auto;
+    padding: 12px;
+    font-size: 17px;
+    line-height: 1.7;
+    border-radius: 2px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  #console::-webkit-scrollbar { width: 4px; }
+  #console::-webkit-scrollbar-thumb { background: var(--border-light); }
+  .log-line { display: flex; gap: 8px; align-items: baseline; padding: 1px 0; animation: slideIn 0.1s ease; }
+  @keyframes slideIn { from{opacity:0;transform:translateX(-4px)} to{opacity:1;transform:translateX(0)} }
+  .log-time { color: var(--text-dim); flex-shrink: 0; font-size: 14px; }
+  .log-prefix { flex-shrink: 0; font-weight: bold; }
+  .log-cmd .log-prefix { color: var(--gold); }
+  .log-output .log-prefix { color: var(--emerald); }
+  .log-error .log-prefix { color: var(--red); }
+  .log-system .log-prefix { color: var(--blue); }
+  .log-cmd .log-text { color: var(--text-bright); }
+  .log-output .log-text { color: var(--emerald); }
+  .log-error .log-text { color: #ff6060; }
+  .log-system .log-text { color: rgba(59,130,246,0.8); }
+  .cmd-row { display: flex; gap: 8px; margin-top: 10px; align-items: stretch; }
+  .cmd-prefix {
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-top-color: var(--border-light);
+    border-left-color: var(--border-light);
+    color: var(--emerald);
+    font-size: 20px;
+    border-radius: 2px 0 0 2px;
+    flex-shrink: 0;
+  }
+  .cmd-input-wrap { flex: 1; }
+  .cmd-input-wrap input { border-radius: 0; font-size: 20px; letter-spacing: 1px; border-right: none; }
+  .cmd-send {
+    padding: 0 16px;
+    background: var(--emerald);
+    color: #000;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-radius: 0 2px 2px 0;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+  .cmd-send:hover { background: #22ff77; }
+  .cmd-send:active { background: #10cc50; }
+  .quick-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .quick-btn {
+    padding: 6px 12px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    background: var(--panel);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+    border-radius: 2px;
+  }
+  .quick-btn:hover { border-color: var(--border-light); color: var(--text); background: var(--border); }
+  .session-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(255,215,0,0.04);
+    border: 1px solid rgba(255,215,0,0.1);
+    border-radius: 2px;
+    margin-bottom: 20px;
+  }
+  .session-info { display: flex; align-items: center; gap: 8px; font-size: 16px; color: var(--gold); }
+  .session-dot { width: 6px; height: 6px; background: var(--gold); box-shadow: 0 0 6px rgba(255,215,0,0.5); animation: session-blink 3s ease-in-out infinite; }
+  @keyframes session-blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .history-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; min-height: 24px; }
+  .history-tag {
+    font-size: 14px;
+    padding: 3px 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-radius: 2px;
+  }
+  .history-tag:hover { color: var(--text); border-color: var(--border-light); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="topbar">
+    <div class="topbar-title">⚙ MINECRAFT ADMIN</div>
+    <a href="index.html" class="back-link">← BACK</a>
+  </div>
+  <div class="card">
+
+    <!-- LOGIN -->
+    <div id="login">
+      <div class="login-icon">🔐</div>
+      <div class="login-title">ADMIN ACCESS</div>
+      <div class="login-subtitle">Enter your credentials to continue</div>
+      <div class="input-group">
+        <label>Admin Key</label>
+        <input type="password" id="pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
+      </div>
+      <button class="btn btn-primary" onclick="login()">AUTHENTICATE</button>
+      <div class="error-msg" id="msg"></div>
+    </div>
+
+    <!-- PANEL -->
+    <div id="panel">
+      <div class="session-bar">
+        <div class="session-info">
+          <div class="session-dot"></div>
+          <span>Authenticated as <strong>Admin</strong></span>
+        </div>
+        <button class="btn btn-danger" onclick="logout()">LOGOUT</button>
+      </div>
+      <div class="panel-grid">
+        <div>
+          <div class="section-header">
+            <div class="section-title">Server Console</div>
+            <button class="btn btn-secondary" onclick="clearConsole()">CLEAR</button>
+          </div>
+          <div id="console"></div>
+          <div class="cmd-row">
+            <div class="cmd-prefix">/</div>
+            <div class="cmd-input-wrap">
+              <input type="text" id="cmd" placeholder="say Hello, World!" onkeydown="if(event.key==='Enter')send()">
+            </div>
+            <button class="cmd-send" onclick="send()">SEND ▶</button>
+          </div>
+          <div class="quick-actions">
+            <button class="quick-btn" onclick="quickCmd('list')">list</button>
+            <button class="quick-btn" onclick="quickCmd('time set day')">set day</button>
+            <button class="quick-btn" onclick="quickCmd('weather clear')">clear weather</button>
+            <button class="quick-btn" onclick="quickCmd('gamerule doDaylightCycle false')">stop time</button>
+            <button class="quick-btn" onclick="quickCmd('say Server restarting soon!')">announce</button>
+          </div>
+        </div>
+        <div>
+          <div class="section-header">
+            <div class="section-title">Recent Commands</div>
+          </div>
+          <div class="history-list" id="history-list">
+            <span style="font-size:15px;color:var(--text-dim)">No commands yet...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let adminKey = ""
+  let cmdHistory = []
+
+  // ---- Login: เก็บ key ไว้ใน memory แล้วทดสอบกับ server ----
+  async function login() {
+    const input = document.getElementById("pass").value.trim()
+    const msg = document.getElementById("msg")
+    if (!input) { msg.textContent = "✗ Please enter your admin key."; return }
+
+    msg.textContent = "Verifying..."
+
+    // ทดสอบ key โดยส่ง dummy command
+    try {
+      const res = await fetch("/cmd", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": input
+        },
+        body: JSON.stringify({ command: "list" })
+      })
+
+      if (res.status === 401) {
+        msg.textContent = "✗ Invalid admin key."
+        document.getElementById("pass").value = ""
+        return
+      }
+
+      // Key ถูกต้อง
+      adminKey = input
+      document.getElementById("login").style.display = "none"
+      document.getElementById("panel").style.display = "block"
+      msg.textContent = ""
+
+      const data = await res.json()
+      log("system", "SYS", "Session started. Welcome, Admin.")
+      if (data.result) log("output", "»", data.result)
+
+    } catch (e) {
+      msg.textContent = "✗ Could not reach server."
+    }
+  }
+
+  function logout() {
+    adminKey = ""
+    cmdHistory = []
+    document.getElementById("login").style.display = "block"
+    document.getElementById("panel").style.display = "none"
+    document.getElementById("pass").value = ""
+    document.getElementById("console").innerHTML = ""
+    renderHistory()
+  }
+
+  function getTime() {
+    return new Date().toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" })
+  }
+
+  function log(type, prefix, text) {
+    const box = document.getElementById("console")
+    const div = document.createElement("div")
+    div.className = `log-line log-${type}`
+    div.innerHTML = `<span class="log-time">[${getTime()}]</span><span class="log-prefix">${prefix}</span><span class="log-text">${escapeHtml(text)}</span>`
+    box.appendChild(div)
+    box.scrollTop = box.scrollHeight
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+  }
+
+  function clearConsole() {
+    document.getElementById("console").innerHTML = ""
+    log("system", "SYS", "Console cleared.")
+  }
+
+  function renderHistory() {
+    const list = document.getElementById("history-list")
+    if (cmdHistory.length === 0) {
+      list.innerHTML = '<span style="font-size:15px;color:var(--text-dim)">No commands yet...</span>'
+      return
+    }
+    list.innerHTML = [...cmdHistory].reverse().slice(0, 10).map(cmd =>
+      `<span class="history-tag" onclick="document.getElementById('cmd').value='${escapeHtml(cmd)}'">${escapeHtml(cmd)}</span>`
+    ).join("")
+  }
+
+  async function send() {
+    const input = document.getElementById("cmd")
+    const cmd = input.value.trim()
+    if (!cmd) return
+    input.value = ""
+
+    log("cmd", ">", "/" + cmd)
+
+    if (!cmdHistory.includes(cmd)) {
+      cmdHistory.push(cmd)
+      if (cmdHistory.length > 20) cmdHistory.shift()
+    }
+    renderHistory()
+
+    try {
+      const res = await fetch("/cmd", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": adminKey
+        },
+        body: JSON.stringify({ command: cmd })
+      })
+
+      const data = await res.json()
+
+      if (res.status === 401) { log("error", "✗", "Unauthorized. Please re-login."); return }
+      if (res.status === 403) { log("error", "✗", "Command not allowed: " + cmd); return }
+      if (res.status === 429) { log("error", "✗", "Rate limit exceeded. Slow down!"); return }
+      if (data.error)  { log("error", "✗", data.error); return }
+
+      const output = data.result || "(no output)"
+      output.split("\n").forEach(line => { if (line.trim()) log("output", "»", line) })
+
+    } catch (e) {
+      log("error", "✗", "Network error: " + e.message)
+    }
+  }
+
+  function quickCmd(cmd) {
+    document.getElementById("cmd").value = cmd
+    send()
+  }
+</script>
+</body>
+</html>
