@@ -1,15 +1,25 @@
 {
-  "name": "minecraft-server-panel",
+  "name": "webservre",
   "version": "1.0.0",
-  "description": "Minecraft server web panel with RCON",
+  "description": "",
   "main": "server.js",
   "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AngPaoPrim/minecraftcheck.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/AngPaoPrim/minecraftcheck/issues"
+  },
+  "homepage": "https://github.com/AngPaoPrim/minecraftcheck#readme",
   "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.18.2",
-    "rcon-client": "^4.2.4"
+    "express": "^5.2.1"
   }
 }
