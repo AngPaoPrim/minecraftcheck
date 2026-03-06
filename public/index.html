@@ -8,7 +8,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#060810;--surface:#0b0f1a;--card:#0e1525;--border:#1a2744;
+  --bg:#060810;--card:#0e1525;--border:#1a2744;
   --accent:#00d4ff;--accent2:#0066ff;--green:#00ff88;--red:#ff3355;--amber:#ffaa00;
   --text:#c8d8f0;--muted:#3a5070;
   --display:'Orbitron',monospace;--mono:'JetBrains Mono',monospace;
@@ -27,8 +27,8 @@ body::before{
 }
 @keyframes gridmove{from{background-position:0 0}to{background-position:48px 48px}}
 body::after{
-  content:'';position:fixed;top:50%;left:50%;
-  width:800px;height:800px;transform:translate(-50%,-50%);
+  content:'';position:fixed;top:50%;left:50%;width:800px;height:800px;
+  transform:translate(-50%,-50%);
   background:radial-gradient(ellipse,rgba(0,102,255,.08) 0%,transparent 70%);
   pointer-events:none;z-index:0;
 }
@@ -48,6 +48,20 @@ body::after{
 .subtitle{text-align:center;font-size:10px;color:var(--muted);letter-spacing:4px;
   text-transform:uppercase;margin-bottom:28px;}
 
+/* Live badge */
+.live-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.25);
+  border-radius:20px;padding:4px 12px;margin:0 auto 28px;
+  font-size:9px;letter-spacing:3px;color:var(--green);text-transform:uppercase;
+  font-family:var(--display);
+  position:relative;left:50%;transform:translateX(-50%);
+}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);
+  animation:liveblink 1.2s ease-in-out infinite;
+  box-shadow:0 0 6px var(--green);}
+@keyframes liveblink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
+
 .card{
   background:var(--card);border:1px solid var(--border);border-radius:12px;
   padding:28px;margin-bottom:14px;position:relative;overflow:hidden;
@@ -59,11 +73,21 @@ body::after{
   background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.5;
 }
 
+/* Flash animation when value changes */
+@keyframes flash{
+  0%{background:rgba(0,212,255,.18)}
+  100%{background:transparent}
+}
+.flash{animation:flash .6s ease-out}
+
 .status-badge{
   display:flex;align-items:center;justify-content:space-between;
   margin-bottom:24px;padding:13px 16px;
   background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;
+  transition:border-color .4s;
 }
+.status-badge.online-border{border-color:rgba(0,255,136,.2)}
+.status-badge.offline-border{border-color:rgba(255,51,85,.2)}
 .badge-left{display:flex;align-items:center;gap:12px}
 .indicator{width:12px;height:12px;border-radius:50%;flex-shrink:0;transition:all .5s}
 .indicator.online{background:var(--green);
@@ -84,60 +108,76 @@ body::after{
 .status-label.online{color:var(--green);text-shadow:0 0 10px rgba(0,255,136,.5)}
 .status-label.offline{color:var(--red);text-shadow:0 0 10px rgba(255,51,85,.4)}
 .status-label.loading{color:var(--amber)}
-.last-ping{font-size:10px;color:var(--muted);letter-spacing:1px}
+.last-ping{font-size:10px;color:var(--muted);letter-spacing:1px;font-variant-numeric:tabular-nums}
 
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
 .stat-box{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;
-  padding:15px;transition:border-color .3s}
+  padding:15px;transition:border-color .3s;border-radius:8px;}
 .stat-box:hover{border-color:rgba(0,212,255,.2)}
 .stat-key{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
 .stat-val{font-family:var(--display);font-size:28px;font-weight:700;
-  color:var(--accent);text-shadow:0 0 15px rgba(0,212,255,.4);transition:all .5s}
+  color:var(--accent);text-shadow:0 0 15px rgba(0,212,255,.4);
+  transition:color .4s;border-radius:4px;display:inline-block;min-width:40px;}
 .stat-val.green{color:var(--green);text-shadow:0 0 15px rgba(0,255,136,.4)}
 
 .cap-wrap{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:15px}
 .cap-header{display:flex;justify-content:space-between;margin-bottom:10px;align-items:center}
 .cap-label{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
-.cap-count{font-family:var(--display);font-size:12px;color:var(--text);letter-spacing:1px}
+.cap-count{font-family:var(--display);font-size:12px;color:var(--text);
+  letter-spacing:1px;font-variant-numeric:tabular-nums}
 .bar-track{height:8px;background:rgba(0,0,0,.5);border-radius:4px;overflow:hidden;
   border:1px solid rgba(0,212,255,.1)}
 .bar-fill{height:100%;border-radius:4px;
   background:linear-gradient(90deg,var(--accent2),var(--accent),var(--green));
-  transition:width 1s cubic-bezier(.4,0,.2,1);box-shadow:0 0 10px rgba(0,212,255,.5);
+  transition:width .8s cubic-bezier(.4,0,.2,1);box-shadow:0 0 10px rgba(0,212,255,.5);
   position:relative;overflow:hidden}
 .bar-fill::after{content:'';position:absolute;inset:0;
   background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);
   animation:shimmer 2s linear infinite}
 @keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
 
-.bottom{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
-.cd{font-size:9px;color:var(--muted);letter-spacing:2px}
-.refresh-btn{
-  font-family:var(--display);font-size:8px;letter-spacing:2px;
-  padding:8px 18px;background:none;cursor:pointer;
-  border:1px solid rgba(0,212,255,.3);border-radius:6px;color:var(--accent);
-  text-transform:uppercase;transition:all .2s;position:relative;overflow:hidden;
+/* Poll indicator */
+.poll-row{display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:8px;margin-top:4px}
+.poll-info{display:flex;align-items:center;gap:8px}
+.poll-ring{
+  width:28px;height:28px;
+  position:relative;flex-shrink:0;
 }
-.refresh-btn:hover{border-color:var(--accent);background:rgba(0,212,255,.07);
-  box-shadow:0 0 16px rgba(0,212,255,.15)}
-.refresh-btn:disabled{opacity:.35;cursor:not-allowed}
-.refresh-btn.spin::after{content:'';position:absolute;inset:0;
-  background:linear-gradient(90deg,transparent,rgba(0,212,255,.2),transparent);
-  animation:sweep .7s linear infinite}
-@keyframes sweep{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.poll-ring svg{transform:rotate(-90deg)}
+.poll-ring circle.track{stroke:rgba(0,212,255,.1);fill:none;stroke-width:3}
+.poll-ring circle.fill{
+  stroke:var(--accent);fill:none;stroke-width:3;
+  stroke-linecap:round;
+  stroke-dasharray:66;stroke-dashoffset:66;
+  transition:stroke-dashoffset .4s linear;
+}
+.poll-text{font-size:9px;color:var(--muted);letter-spacing:2px}
+.poll-count{font-size:9px;color:rgba(0,212,255,.5);letter-spacing:1px;
+  font-family:var(--display)}
 
 .note{font-size:9px;color:var(--muted);letter-spacing:1px;text-align:center;
   margin-top:10px;line-height:2}
 .note span{color:rgba(0,212,255,.45)}
+
+/* Error toast */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:#1a0810;border:1px solid rgba(255,51,85,.4);border-radius:8px;
+  padding:10px 20px;font-size:11px;color:var(--red);letter-spacing:1px;
+  transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:999;white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
 <div class="container">
   <h1 class="title">⛏ MC Status</h1>
   <p class="subtitle">Live Server Monitor</p>
+  <div class="live-pill"><div class="live-dot"></div>LIVE</div>
 
   <div class="card">
-    <div class="status-badge">
+    <div class="status-badge" id="badge">
       <div class="badge-left">
         <div class="indicator loading" id="dot"></div>
         <span class="status-label loading" id="statusLabel">CONNECTING...</span>
@@ -167,50 +207,145 @@ body::after{
     </div>
   </div>
 
-  <div class="bottom">
-    <span class="cd" id="cd"></span>
-    <button class="refresh-btn" id="refreshBtn" onclick="fetchStatus()">↺ Refresh</button>
+  <div class="poll-row">
+    <div class="poll-info">
+      <div class="poll-ring">
+        <svg width="28" height="28" viewBox="0 0 28 28">
+          <circle class="track" cx="14" cy="14" r="10.5"/>
+          <circle class="fill" id="ringFill" cx="14" cy="14" r="10.5"/>
+        </svg>
+      </div>
+      <span class="poll-text" id="pollText">Updating in 2s</span>
+    </div>
+    <span class="poll-count" id="pollCount">POLL #0</span>
   </div>
-  <p class="note">Data from <span>GET /status</span> · Auto-refresh every <span>10s</span></p>
+
+  <p class="note">Real-time via <span>GET /status</span> · poll every <span>2s</span></p>
 </div>
 
+<!-- Error toast -->
+<div class="toast" id="toast">⚠ Server unreachable</div>
+
 <script>
-let timer=10,interval;
+const INTERVAL = 2000; // 2 seconds
+const CIRCUMFERENCE = 66; // 2π×10.5 ≈ 66
 
-async function fetchStatus(){
-  const btn=document.getElementById('refreshBtn');
-  btn.disabled=true;btn.classList.add('spin');
-  setDot('loading','CONNECTING...');
-  try{
-    const r=await fetch('/status');
-    if(!r.ok) throw new Error();
-    const d=await r.json();
-    setDot(d.online?'online':'offline',d.online?'ONLINE':'OFFLINE');
-    document.getElementById('players').textContent   =d.players    ??'—';
-    document.getElementById('maxPlayers').textContent=d.maxPlayers ??'—';
-    const pct=d.maxPlayers>0?Math.min(100,Math.round(d.players/d.maxPlayers*100)):0;
-    document.getElementById('barFill').style.width=pct+'%';
-    document.getElementById('capCount').textContent=`${d.players??'—'} / ${d.maxPlayers??'—'}`;
-  }catch{
-    setDot('offline','UNREACHABLE');
+let prev = {};
+let pollCount = 0;
+let toastTimer = null;
+let pollTimer = null;
+let startTime = null;
+
+/* ── DOM refs ── */
+const dot         = document.getElementById('dot');
+const statusLabel = document.getElementById('statusLabel');
+const badge       = document.getElementById('badge');
+const lastPing    = document.getElementById('lastPing');
+const elPlayers   = document.getElementById('players');
+const elMax       = document.getElementById('maxPlayers');
+const barFill     = document.getElementById('barFill');
+const capCount    = document.getElementById('capCount');
+const ringFill    = document.getElementById('ringFill');
+const pollText    = document.getElementById('pollText');
+const pollCountEl = document.getElementById('pollCount');
+const toast       = document.getElementById('toast');
+
+/* ── Fetch ── */
+async function fetchStatus() {
+  clearTimeout(pollTimer);
+  try {
+    const r = await fetch('/status');
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    applyData(d);
+    hideToast();
+  } catch {
+    setDot('loading', 'CONNECTING...');
+    badge.className = 'status-badge';
+    showToast();
   }
-  document.getElementById('lastPing').textContent=
-    'Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  btn.disabled=false;btn.classList.remove('spin');
-  resetTimer();
+  pollCount++;
+  pollCountEl.textContent = `POLL #${pollCount}`;
+  lastPing.textContent = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  // Schedule next
+  startCountdown();
 }
 
-function setDot(cls,msg){
-  document.getElementById('dot').className='indicator '+cls;
-  const lb=document.getElementById('statusLabel');
-  lb.className='status-label '+cls;lb.textContent=msg;
-}
-function resetTimer(){
-  clearInterval(interval);timer=10;showTimer();
-  interval=setInterval(()=>{timer--;showTimer();if(timer<=0)fetchStatus();},1000);
-}
-function showTimer(){document.getElementById('cd').textContent=timer>0?`Refresh in ${timer}s`:'';}
+/* ── Apply data with smart diff ── */
+function applyData(d) {
+  const online = !!d.online;
 
+  // Status
+  if (prev.online !== online) {
+    setDot(online ? 'online' : 'offline', online ? 'ONLINE' : 'OFFLINE');
+    badge.className = 'status-badge ' + (online ? 'online-border' : 'offline-border');
+  }
+
+  // Players — flash only if changed
+  if (prev.players !== d.players) {
+    setVal(elPlayers, d.players ?? '—');
+  }
+  if (prev.maxPlayers !== d.maxPlayers) {
+    setVal(elMax, d.maxPlayers ?? '—');
+  }
+
+  // Bar
+  if (prev.players !== d.players || prev.maxPlayers !== d.maxPlayers) {
+    const pct = d.maxPlayers > 0 ? Math.min(100, Math.round(d.players / d.maxPlayers * 100)) : 0;
+    barFill.style.width = pct + '%';
+    capCount.textContent = `${d.players ?? '—'} / ${d.maxPlayers ?? '—'}`;
+  }
+
+  prev = { online, players: d.players, maxPlayers: d.maxPlayers };
+}
+
+function setVal(el, val) {
+  el.textContent = val;
+  el.classList.remove('flash');
+  void el.offsetWidth; // reflow to restart animation
+  el.classList.add('flash');
+}
+
+function setDot(cls, msg) {
+  dot.className = 'indicator ' + cls;
+  statusLabel.className = 'status-label ' + cls;
+  statusLabel.textContent = msg;
+}
+
+/* ── Countdown ring ── */
+function startCountdown() {
+  const end = Date.now() + INTERVAL;
+
+  function tick() {
+    const remaining = Math.max(0, end - Date.now());
+    const progress = 1 - remaining / INTERVAL;
+    const offset = CIRCUMFERENCE * (1 - progress);
+    ringFill.style.strokeDashoffset = offset;
+
+    const secs = Math.ceil(remaining / 1000);
+    pollText.textContent = remaining > 0 ? `Updating in ${secs}s` : 'Updating...';
+
+    if (remaining > 0) {
+      requestAnimationFrame(tick);
+    } else {
+      fetchStatus();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ── Toast ── */
+function showToast() {
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, 3000);
+}
+function hideToast() {
+  toast.classList.remove('show');
+}
+
+/* ── Boot ── */
 fetchStatus();
 </script>
 </body>
