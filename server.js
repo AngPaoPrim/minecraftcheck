@@ -9,7 +9,7 @@ maxPlayers:20,
 playerList:[]
 }
 let command = "none"
-let lastUpdate = 0
+let lastUpdate = Date.now()  // ← แก้จาก 0
 app.post("/status",(req,res)=>{
 status = req.body
 lastUpdate = Date.now()
