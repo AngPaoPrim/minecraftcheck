@@ -163,6 +163,36 @@ body::after{
 .poll-text{font-size:9px;color:var(--muted);letter-spacing:2px}
 .poll-count{font-size:9px;color:rgba(0,212,255,.4);font-family:var(--display)}
 
+/* ── Connect cards ── */
+.connect-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.connect-card{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:14px 16px;transition:border-color .3s}
+.connect-card:hover{border-color:rgba(0,212,255,.2)}
+.connect-badge{display:inline-flex;align-items:center;gap:5px;font-size:8px;letter-spacing:2px;
+  font-family:var(--display);text-transform:uppercase;margin-bottom:8px;padding:3px 8px;border-radius:4px}
+.connect-badge.java{background:rgba(255,170,0,.1);color:var(--amber);border:1px solid rgba(255,170,0,.2)}
+.connect-badge.bedrock{background:rgba(0,212,255,.1);color:var(--accent);border:1px solid rgba(0,212,255,.2)}
+.connect-addr{font-size:12px;color:var(--text);word-break:break-all;line-height:1.5;min-height:18px}
+.connect-addr.empty{color:var(--muted);font-style:italic;font-size:11px}
+.connect-copy{margin-top:10px;width:100%;font-family:var(--display);font-size:8px;letter-spacing:1px;
+  padding:7px;background:none;cursor:pointer;border:1px solid var(--border);border-radius:6px;
+  color:var(--muted);transition:all .2s;text-transform:uppercase}
+.connect-copy:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,212,255,.06)}
+.connect-copy.copied{border-color:var(--green)!important;color:var(--green)!important}
+.connect-copy:disabled{opacity:.3;cursor:not-allowed}
+/* ── Admin server settings ── */
+.srv-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.srv-field{display:flex;flex-direction:column;gap:5px}
+.srv-label{font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;font-family:var(--display)}
+.srv-input{background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:7px;
+  padding:9px 12px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .2s}
+.srv-input:focus{border-color:rgba(0,212,255,.4)}
+.srv-input::placeholder{color:var(--muted)}
+.srv-save{width:100%;font-family:var(--display);font-size:8px;letter-spacing:2px;padding:10px;
+  background:none;cursor:pointer;border:1px solid rgba(0,212,255,.3);border-radius:7px;
+  color:var(--accent);text-transform:uppercase;transition:all .2s}
+.srv-save:hover{border-color:var(--accent);background:rgba(0,212,255,.08)}
+.srv-save.saved{border-color:var(--green);color:var(--green)}
+
 /* ── Admin login ── */
 .login-wrap{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -250,6 +280,26 @@ body::after{
   transition:all .2s;float:right;margin-bottom:12px;}
 .logout-btn:hover{border-color:var(--red);background:rgba(255,51,85,.08)}
 
+/* ── Autocomplete ── */
+.ac-wrap{position:relative}
+.ac-dropdown{
+  position:absolute;bottom:calc(100% + 6px);left:0;right:0;
+  background:#080f1a;border:1px solid rgba(0,212,255,.25);border-radius:8px;
+  overflow:hidden;z-index:50;display:none;
+  box-shadow:0 -8px 24px rgba(0,0,0,.6);
+}
+.ac-dropdown.open{display:block}
+.ac-item{
+  padding:9px 14px;font-size:12px;color:var(--text);cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;
+  transition:background .15s;border-bottom:1px solid rgba(255,255,255,.04);
+}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item.active{background:rgba(0,212,255,.1);color:var(--accent)}
+.ac-item .ac-cmd{color:var(--accent);font-family:var(--mono)}
+.ac-item .ac-desc{font-size:10px;color:var(--muted);margin-left:10px}
+.ac-hint{font-size:9px;color:var(--muted);padding:2px 0 0;letter-spacing:1px}
+
 /* ── Toast ── */
 .toast{
   position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
@@ -309,6 +359,23 @@ body::after{
       </div>
     </div>
 
+    <!-- Connect addresses -->
+    <div class="card" id="connectCard">
+      <div class="card-label">เชื่อมต่อเซิฟเวอร์</div>
+      <div class="connect-grid">
+        <div class="connect-card">
+          <div class="connect-badge java">☕ Java</div>
+          <div class="connect-addr" id="javaAddr"><span class="empty">ยังไม่ได้ตั้งค่า</span></div>
+          <button class="connect-copy" id="javaCopyBtn" onclick="copyAddr('java')" disabled>คัดลอก</button>
+        </div>
+        <div class="connect-card">
+          <div class="connect-badge bedrock">⬡ Bedrock</div>
+          <div class="connect-addr" id="bedrockAddr"><span class="empty">ยังไม่ได้ตั้งค่า</span></div>
+          <button class="connect-copy" id="bedrockCopyBtn" onclick="copyAddr('bedrock')" disabled>คัดลอก</button>
+        </div>
+      </div>
+    </div>
+
     <div class="poll-row">
       <div class="poll-info">
         <div class="poll-ring">
@@ -347,9 +414,26 @@ body::after{
 
     <!-- Admin console (hidden until login) -->
     <div class="admin-content" id="adminContent">
+
+      <!-- Server address settings -->
       <div class="card">
         <button class="logout-btn" onclick="doLogout()">🔒 Lock</button>
-        <div class="card-label" style="clear:both">RCON Console</div>
+        <div class="card-label" style="clear:both">ตั้งค่าที่อยู่เซิฟเวอร์</div>
+        <div class="srv-row">
+          <div class="srv-field">
+            <span class="srv-label">☕ Java Address</span>
+            <input class="srv-input" id="javaInput" placeholder="e.g. play.example.com"/>
+          </div>
+          <div class="srv-field">
+            <span class="srv-label">⬡ Bedrock Address</span>
+            <input class="srv-input" id="bedrockInput" placeholder="e.g. be.example.com:19132"/>
+          </div>
+        </div>
+        <button class="srv-save" id="srvSaveBtn" onclick="saveAddresses()">💾 บันทึก (แสดงหน้า Status)</button>
+      </div>
+
+      <div class="card">
+        <div class="card-label">RCON Console</div>
 
         <div class="terminal" id="terminal">
           <div class="t-line info">── Admin Console Ready ──</div>
@@ -357,11 +441,14 @@ body::after{
           <div class="t-line info">The Minecraft plugin polls GET /cmd to execute.</div>
         </div>
 
-        <div class="cmd-row">
-          <input class="cmd-input" id="cmdInput" placeholder="e.g.  list   say Hello   time set day"
-                 onkeydown="if(event.key==='Enter')sendCmd()"/>
-          <button class="send-btn" onclick="sendCmd()">SEND</button>
+        <div class="ac-wrap">
+          <div class="ac-dropdown" id="acDropdown"></div>
+          <div class="cmd-row">
+            <input class="cmd-input" id="cmdInput" placeholder="พิม / แล้วกด Tab เพื่อ autocomplete" autocomplete="off"/>
+            <button class="send-btn" onclick="sendCmd()">SEND</button>
+          </div>
         </div>
+        <div class="ac-hint">↑↓ เลือก &nbsp;·&nbsp; Tab ยืนยัน &nbsp;·&nbsp; Esc ปิด</div>
 
         <div class="quick-wrap">
           <button class="qbtn" onclick="quick('list')">list</button>
@@ -523,12 +610,134 @@ function doLogout() {
   document.getElementById('adminContent').classList.remove('unlocked');
 }
 
+/* ════ AUTOCOMPLETE ════ */
+const AC_COMMANDS = [
+  { cmd: 'list',                          desc: 'แสดงผู้เล่นออนไลน์' },
+  { cmd: 'say ',                          desc: 'ส่งข้อความ broadcast' },
+  { cmd: 'tell ',                         desc: 'ส่งข้อความส่วนตัว' },
+  { cmd: 'kill ',                         desc: 'kill ผู้เล่น' },
+  { cmd: 'tp ',                           desc: 'teleport ผู้เล่น' },
+  { cmd: 'give ',                         desc: 'มอบ item' },
+  { cmd: 'gamemode survival ',            desc: 'เปลี่ยน gamemode' },
+  { cmd: 'gamemode creative ',            desc: 'เปลี่ยน gamemode' },
+  { cmd: 'gamemode adventure ',           desc: 'เปลี่ยน gamemode' },
+  { cmd: 'gamemode spectator ',           desc: 'เปลี่ยน gamemode' },
+  { cmd: 'time set day',                  desc: 'ตั้งเวลาเป็นกลางวัน' },
+  { cmd: 'time set night',                desc: 'ตั้งเวลาเป็นกลางคืน' },
+  { cmd: 'time set noon',                 desc: 'ตั้งเวลาเที่ยง' },
+  { cmd: 'time set midnight',             desc: 'ตั้งเวลาเที่ยงคืน' },
+  { cmd: 'weather clear',                 desc: 'ฟ้าแจ่มใส' },
+  { cmd: 'weather rain',                  desc: 'ฝนตก' },
+  { cmd: 'weather thunder',               desc: 'พายุฝนฟ้าคะนอง' },
+  { cmd: 'difficulty peaceful',           desc: 'ปรับความยากเป็น peaceful' },
+  { cmd: 'difficulty easy',               desc: 'ปรับความยากเป็น easy' },
+  { cmd: 'difficulty normal',             desc: 'ปรับความยากเป็น normal' },
+  { cmd: 'difficulty hard',               desc: 'ปรับความยากเป็น hard' },
+  { cmd: 'gamerule keepInventory true',   desc: 'เก็บ inventory ตายไม่หาย' },
+  { cmd: 'gamerule keepInventory false',  desc: 'inventory หายตามปกติ' },
+  { cmd: 'gamerule doDaylightCycle true', desc: 'เปิดวงจรกลางวัน/คืน' },
+  { cmd: 'gamerule doDaylightCycle false',desc: 'หยุดวงจรกลางวัน/คืน' },
+  { cmd: 'gamerule doMobSpawning true',   desc: 'เปิด mob spawn' },
+  { cmd: 'gamerule doMobSpawning false',  desc: 'ปิด mob spawn' },
+  { cmd: 'gamerule mobGriefing true',     desc: 'เปิด mob griefing' },
+  { cmd: 'gamerule mobGriefing false',    desc: 'ปิด mob griefing' },
+  { cmd: 'seed',                          desc: 'แสดง seed โลก' },
+  { cmd: 'whitelist add ',                desc: 'เพิ่มเข้า whitelist' },
+  { cmd: 'whitelist remove ',             desc: 'ลบออกจาก whitelist' },
+  { cmd: 'whitelist list',                desc: 'แสดง whitelist' },
+  { cmd: 'kick ',                         desc: 'kick ผู้เล่น' },
+  { cmd: 'ban ',                          desc: 'ban ผู้เล่น' },
+  { cmd: 'pardon ',                       desc: 'unban ผู้เล่น' },
+  { cmd: 'xp add ',                       desc: 'เพิ่ม XP' },
+  { cmd: 'effect give ',                  desc: 'ให้ effect' },
+  { cmd: 'effect clear ',                 desc: 'ลบ effect' },
+  { cmd: 'enchant ',                      desc: 'เพิ่ม enchantment' },
+  { cmd: 'summon ',                       desc: 'spawn entity' },
+];
+
+let acIdx = -1;
+let acFiltered = [];
+
+const acDropdown = document.getElementById('acDropdown');
+const cmdInput   = document.getElementById('cmdInput');
+
+function updateAC() {
+  const val = cmdInput.value;
+  if (!val) { closeAC(); return; }
+  acFiltered = AC_COMMANDS.filter(c =>
+    c.cmd.toLowerCase().startsWith(val.toLowerCase()) && c.cmd.toLowerCase() !== val.toLowerCase()
+  );
+  if (acFiltered.length === 0) { closeAC(); return; }
+  acIdx = -1;
+  acDropdown.innerHTML = acFiltered.slice(0, 8).map((c, i) =>
+    `<div class="ac-item" data-i="${i}" onmousedown="acPick(${i})">
+      <span class="ac-cmd">${esc(c.cmd)}</span>
+      <span class="ac-desc">${c.desc}</span>
+    </div>`
+  ).join('');
+  acDropdown.classList.add('open');
+}
+
+function acPick(i) {
+  if (acFiltered[i]) {
+    cmdInput.value = acFiltered[i].cmd;
+    closeAC();
+    cmdInput.focus();
+  }
+}
+
+function closeAC() {
+  acDropdown.classList.remove('open');
+  acIdx = -1;
+}
+
+function acHighlight() {
+  document.querySelectorAll('.ac-item').forEach((el, i) => {
+    el.classList.toggle('active', i === acIdx);
+  });
+}
+
 /* ════ COMMAND ════ */
 function quick(cmd) {
-  document.getElementById('cmdInput').value = cmd;
+  cmdInput.value = cmd;
   sendCmd();
 }
-document.getElementById('cmdInput').addEventListener('keydown', function(e) {
+
+cmdInput.addEventListener('input', updateAC);
+
+cmdInput.addEventListener('keydown', function(e) {
+  // Autocomplete navigation
+  if (acDropdown.classList.contains('open')) {
+    if (e.key === 'Tab' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      const pick = acIdx >= 0 ? acFiltered[acIdx] : acFiltered[0];
+      if (pick) { cmdInput.value = pick.cmd; closeAC(); }
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      acIdx = Math.min(acIdx + 1, Math.min(acFiltered.length, 8) - 1);
+      acHighlight();
+      return;
+    }
+    if (e.key === 'ArrowUp' && acDropdown.classList.contains('open')) {
+      e.preventDefault();
+      acIdx = Math.max(acIdx - 1, -1);
+      acHighlight();
+      return;
+    }
+    if (e.key === 'Escape') { closeAC(); return; }
+    if (e.key === 'Enter') {
+      if (acIdx >= 0 && acFiltered[acIdx]) {
+        e.preventDefault();
+        cmdInput.value = acFiltered[acIdx].cmd;
+        closeAC();
+        return;
+      }
+    }
+  }
+
+  // History
   if (e.key === 'ArrowUp') {
     if (histIdx < cmdHistory.length - 1) { histIdx++; this.value = cmdHistory[cmdHistory.length-1-histIdx]; }
     e.preventDefault();
@@ -538,6 +747,11 @@ document.getElementById('cmdInput').addEventListener('keydown', function(e) {
     else { histIdx = -1; this.value = ''; }
     e.preventDefault();
   }
+  if (e.key === 'Enter') { sendCmd(); }
+});
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.ac-wrap')) closeAC();
 });
 
 async function sendCmd() {
@@ -587,7 +801,67 @@ function hideToast() { toastEl.classList.remove('show'); }
 /* ════ UTIL ════ */
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+/* ════ SERVER ADDRESSES ════ */
+function loadAddresses() {
+  const java    = localStorage.getItem('mc_java_addr')    || '';
+  const bedrock = localStorage.getItem('mc_bedrock_addr') || '';
+
+  // Status page display
+  const javaEl    = document.getElementById('javaAddr');
+  const bedrockEl = document.getElementById('bedrockAddr');
+  const javaCopy    = document.getElementById('javaCopyBtn');
+  const bedrockCopy = document.getElementById('bedrockCopyBtn');
+
+  if (java) {
+    javaEl.innerHTML = java;
+    javaEl.classList.remove('empty');
+    javaCopy.disabled = false;
+  } else {
+    javaEl.innerHTML = '<span class="empty">ยังไม่ได้ตั้งค่า</span>';
+    javaCopy.disabled = true;
+  }
+  if (bedrock) {
+    bedrockEl.innerHTML = bedrock;
+    bedrockEl.classList.remove('empty');
+    bedrockCopy.disabled = false;
+  } else {
+    bedrockEl.innerHTML = '<span class="empty">ยังไม่ได้ตั้งค่า</span>';
+    bedrockCopy.disabled = true;
+  }
+
+  // Populate admin inputs
+  const ji = document.getElementById('javaInput');
+  const bi = document.getElementById('bedrockInput');
+  if (ji) ji.value = java;
+  if (bi) bi.value = bedrock;
+}
+
+function saveAddresses() {
+  const java    = document.getElementById('javaInput').value.trim();
+  const bedrock = document.getElementById('bedrockInput').value.trim();
+  localStorage.setItem('mc_java_addr',    java);
+  localStorage.setItem('mc_bedrock_addr', bedrock);
+  loadAddresses();
+  const btn = document.getElementById('srvSaveBtn');
+  btn.textContent = '✓ บันทึกแล้ว';
+  btn.classList.add('saved');
+  setTimeout(() => { btn.textContent = '💾 บันทึก (แสดงหน้า Status)'; btn.classList.remove('saved'); }, 2000);
+  showToast('✓ บันทึกที่อยู่เซิฟเวอร์แล้ว', true);
+}
+
+function copyAddr(type) {
+  const val = localStorage.getItem('mc_' + type + '_addr') || '';
+  if (!val) return;
+  navigator.clipboard.writeText(val).then(() => {
+    const btn = document.getElementById(type + 'CopyBtn');
+    btn.textContent = '✓ คัดลอกแล้ว';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'คัดลอก'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
 /* ════ BOOT ════ */
+loadAddresses();
 fetchStatus();
 </script>
 </body>
