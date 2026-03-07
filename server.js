@@ -9,7 +9,7 @@ maxPlayers:20,
 playerList:[]
 }
 let command = "none"
-let lastUpdate = Date.now()  // ← แก้จาก 0
+let lastUpdate = Date.now()
 app.post("/status",(req,res)=>{
 status = req.body
 lastUpdate = Date.now()
@@ -36,6 +36,6 @@ app.get("/",(req,res)=>{
 res.sendFile(__dirname + "/index.html")
 })
 const PORT = process.env.PORT || 3000
-app.listen(PORT,()=>{
+app.listen(PORT, '0.0.0.0', ()=>{
 console.log("Server running on port",PORT)
 })
