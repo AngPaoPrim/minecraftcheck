@@ -289,6 +289,17 @@ body::after{
 .ac-hint{font-size:9px;color:var(--muted);padding:4px 0 0;letter-spacing:1px;display:flex;gap:12px;flex-wrap:wrap}
 .ac-hint span{opacity:.6}
 
+.bm-open-btn,.bm-toggle-btn{
+  font-family:var(--display);font-size:8px;letter-spacing:1px;padding:5px 10px;
+  background:none;cursor:pointer;border-radius:6px;transition:all .2s;
+}
+.bm-open-btn{border:1px solid rgba(0,212,255,.25);color:var(--muted)}
+.bm-open-btn:hover{border-color:var(--accent);color:var(--accent)}
+.bm-toggle-btn{border:1px solid rgba(0,255,136,.25);color:var(--green)}
+.bm-toggle-btn:hover{background:rgba(0,255,136,.08)}
+.bm-toggle-btn.active{background:rgba(0,255,136,.1);border-color:var(--green)}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
 .toast{
   position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
   background:#0e0810;border:1px solid rgba(255,51,85,.4);border-radius:8px;
@@ -357,6 +368,24 @@ body::after{
         </div>
       </div>
     </div>
+    <!-- BlueMap Viewer -->
+    <div class="card" id="bluemapCard" style="display:none">
+      <div class="card-label" style="display:flex;align-items:center;justify-content:space-between">
+        <span>🗺 BlueMap — แผนที่โลก</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="bm-open-btn" onclick="openBluemapExternal()" title="เปิดในแท็บใหม่">↗ เปิด</button>
+          <button class="bm-toggle-btn" id="bmToggleBtn" onclick="toggleBluemap()">▶ แสดงแผนที่</button>
+        </div>
+      </div>
+      <div id="bmFrame" style="display:none;margin-top:12px;border-radius:8px;overflow:hidden;border:1px solid var(--border);position:relative">
+        <iframe id="bmIframe" src="" style="width:100%;height:420px;border:none;display:block" allowfullscreen></iframe>
+        <div id="bmLoading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(6,8,16,.9);gap:12px">
+          <div style="font-size:32px;animation:spin 1.5s linear infinite">🗺</div>
+          <div style="font-family:var(--display);font-size:9px;letter-spacing:3px;color:var(--accent)">LOADING BLUEMAP...</div>
+        </div>
+      </div>
+    </div>
+
     <div class="poll-row">
       <div class="poll-info">
         <div class="poll-ring">
@@ -403,7 +432,15 @@ body::after{
             <input class="srv-input" id="bedrockInput" placeholder="e.g. be.example.com:19132"/>
           </div>
         </div>
-        <button class="srv-save" id="srvSaveBtn" onclick="saveAddresses()">💾 บันทึก (แสดงหน้า Status)</button>
+        <div class="srv-field" style="margin-bottom:12px">
+          <span class="srv-label">🗺 BlueMap URL</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="srv-input" id="bluemapInput" placeholder="https://xxx.trycloudflare.com/#world:0:64:0:..." style="flex:1;min-width:0"/>
+            <button onclick="testBluemap()" style="flex-shrink:0;font-family:var(--display);font-size:8px;letter-spacing:1px;padding:9px 12px;background:none;cursor:pointer;border:1px solid rgba(0,212,255,.3);border-radius:7px;color:var(--accent);white-space:nowrap;transition:all .2s" onmouseover="this.style.background='rgba(0,212,255,.08)'" onmouseout="this.style.background='none'">▶ ทดสอบ</button>
+          </div>
+          <div style="font-size:9px;color:var(--muted);margin-top:5px;letter-spacing:1px">⚠ URL เปลี่ยนทุกครั้งที่ restart Cloudflare Tunnel — อัปเดตได้ที่นี่</div>
+        </div>
+        <button class="srv-save" id="srvSaveBtn" onclick="saveAddresses()">💾 บันทึกทั้งหมด</button>
       </div>
 
       <div class="card">
@@ -1179,10 +1216,11 @@ function hideToast() { toastEl.classList.remove('show'); }
 /* ════ UTIL ════ */
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-/* ════ SERVER ADDRESSES ════ */
+/* ════ SERVER ADDRESSES + BLUEMAP ════ */
 function loadAddresses() {
   const java    = localStorage.getItem('mc_java_addr')    || '';
   const bedrock = localStorage.getItem('mc_bedrock_addr') || '';
+  const bluemap = localStorage.getItem('mc_bluemap_url')  || '';
   const javaEl  = document.getElementById('javaAddr');
   const bedrockEl = document.getElementById('bedrockAddr');
   const javaCopy  = document.getElementById('javaCopyBtn');
@@ -1193,21 +1231,64 @@ function loadAddresses() {
   else         { bedrockEl.innerHTML = '<span class="empty">ยังไม่ได้ตั้งค่า</span>'; bedrockCopy.disabled = true; }
   const ji = document.getElementById('javaInput');
   const bi = document.getElementById('bedrockInput');
+  const bmi = document.getElementById('bluemapInput');
   if (ji) ji.value = java;
   if (bi) bi.value = bedrock;
+  if (bmi) bmi.value = bluemap;
+  // Show/hide BlueMap card on status page
+  const bmCard = document.getElementById('bluemapCard');
+  if (bmCard) bmCard.style.display = bluemap ? 'block' : 'none';
 }
 
 function saveAddresses() {
   const java    = document.getElementById('javaInput').value.trim();
   const bedrock = document.getElementById('bedrockInput').value.trim();
+  const bluemap = document.getElementById('bluemapInput').value.trim();
   localStorage.setItem('mc_java_addr',    java);
   localStorage.setItem('mc_bedrock_addr', bedrock);
+  localStorage.setItem('mc_bluemap_url',  bluemap);
   loadAddresses();
   const btn = document.getElementById('srvSaveBtn');
   btn.textContent = '✓ บันทึกแล้ว';
   btn.classList.add('saved');
-  setTimeout(() => { btn.textContent = '💾 บันทึก (แสดงหน้า Status)'; btn.classList.remove('saved'); }, 2000);
-  showToast('✓ บันทึกที่อยู่เซิฟเวอร์แล้ว', true);
+  setTimeout(() => { btn.textContent = '💾 บันทึกทั้งหมด'; btn.classList.remove('saved'); }, 2000);
+  showToast('✓ บันทึกการตั้งค่าทั้งหมดแล้ว', true);
+}
+
+function testBluemap() {
+  const url = document.getElementById('bluemapInput').value.trim();
+  if (!url) { showToast('⚠ กรุณาใส่ BlueMap URL ก่อน', false); return; }
+  window.open(url, '_blank');
+}
+
+let bmVisible = false;
+function toggleBluemap() {
+  bmVisible = !bmVisible;
+  const frame  = document.getElementById('bmFrame');
+  const iframe = document.getElementById('bmIframe');
+  const btn    = document.getElementById('bmToggleBtn');
+  const loading = document.getElementById('bmLoading');
+  if (bmVisible) {
+    const url = localStorage.getItem('mc_bluemap_url') || '';
+    if (!url) { showToast('⚠ ยังไม่ได้ตั้งค่า BlueMap URL', false); bmVisible = false; return; }
+    frame.style.display = 'block';
+    btn.textContent = '■ ซ่อนแผนที่';
+    btn.classList.add('active');
+    loading.style.display = 'flex';
+    iframe.src = url;
+    iframe.onload = () => { loading.style.display = 'none'; };
+  } else {
+    frame.style.display = 'none';
+    btn.textContent = '▶ แสดงแผนที่';
+    btn.classList.remove('active');
+    iframe.src = '';
+  }
+}
+
+function openBluemapExternal() {
+  const url = localStorage.getItem('mc_bluemap_url') || '';
+  if (!url) { showToast('⚠ ยังไม่ได้ตั้งค่า BlueMap URL', false); return; }
+  window.open(url, '_blank');
 }
 
 function copyAddr(type) {
