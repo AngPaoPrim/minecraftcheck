@@ -1,41 +1,66 @@
 const express = require("express")
 const bodyParser = require("body-parser")
 const app = express()
+
 app.use(bodyParser.json())
+
 let status = {
-online:false,
-players:0,
-maxPlayers:20,
-playerList:[]
+  online: false,
+  players: 0,
+  maxPlayers: 20,
+  playerList: []
 }
+
 let command = "none"
 let lastUpdate = Date.now()
-app.post("/status",(req,res)=>{
-status = req.body
-lastUpdate = Date.now()
-console.log("Status Update:",status)
-res.sendStatus(200)
+
+// 🔥 รับ status จาก plugin
+app.post("/status", (req, res) => {
+  console.log("🔥 RECEIVED:", req.body)
+
+  // กัน field หาย + merge ปลอดภัย
+  status = {
+    ...status,
+    ...req.body
+  }
+
+  lastUpdate = Date.now()
+  res.sendStatus(200)
 })
-app.get("/status",(req,res)=>{
-const alive = (Date.now() - lastUpdate) < 15000
-res.json({ ...status, online: status.online && alive })
+
+// 🔥 frontend ดู status
+app.get("/status", (req, res) => {
+  const alive = (Date.now() - lastUpdate) < 60000 // 🔥 เพิ่มจาก 15s → 60s
+
+  res.json({
+    ...status,
+    online: status.online && alive
+  })
 })
-app.get("/players",(req,res)=>{
-res.json(status.playerList || [])
+
+// players
+app.get("/players", (req, res) => {
+  res.json(status.playerList || [])
 })
-app.post("/cmd",(req,res)=>{
-command = req.body.cmd
-console.log("Command from web:",command)
-res.sendStatus(200)
+
+// command system
+app.post("/cmd", (req, res) => {
+  command = req.body.cmd
+  console.log("Command from web:", command)
+  res.sendStatus(200)
 })
-app.get("/cmd",(req,res)=>{
-res.send(command)
-command = "none"
+
+app.get("/cmd", (req, res) => {
+  res.send(command)
+  command = "none"
 })
-app.get("/",(req,res)=>{
-res.sendFile(__dirname + "/index.html")
+
+// web panel
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/index.html")
 })
+
 const PORT = process.env.PORT || 3000
-app.listen(PORT, '0.0.0.0', ()=>{
-console.log("Server running on port",PORT)
+app.listen(PORT, "0.0.0.0", () => {
+  console.log("Server running on port", PORT)
 })
